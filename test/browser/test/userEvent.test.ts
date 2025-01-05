@@ -10,7 +10,7 @@ beforeEach(() => {
 const userEvent = _uE.setup()
 
 describe('userEvent.click', () => {
-  test('correctly clicks a button', async () => {
+  function setup() {
     const wrapper = document.createElement('div')
     wrapper.style.height = '100px'
     wrapper.style.width = '200px'
@@ -21,6 +21,11 @@ describe('userEvent.click', () => {
     const button = document.createElement('button')
     button.textContent = 'Click me'
     document.body.appendChild(button)
+    return { wrapper, button }
+  }
+
+  test('correctly clicks a button', async () => {
+    const { button } = setup()
     const onClick = vi.fn()
     const dblClick = vi.fn()
     button.addEventListener('click', onClick)
@@ -29,6 +34,19 @@ describe('userEvent.click', () => {
 
     expect(onClick).toHaveBeenCalled()
     expect(dblClick).not.toHaveBeenCalled()
+  })
+
+  test.runIf(server.provider !== 'preview')('passes options to provider', async () => {
+    const { button } = setup()
+    const onClick = vi.fn()
+    button.addEventListener('contextmenu', (event: MouseEvent) => {
+      event.preventDefault()
+      onClick(event)
+    })
+
+    await userEvent.click(button, { button: 'right' })
+
+    expect(onClick).toHaveBeenCalled()
   })
 
   test('correctly doesn\'t click on a disabled button', async () => {
